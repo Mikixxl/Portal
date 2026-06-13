@@ -256,7 +256,8 @@
       '<div class="hrow"><span class="hk">Initial password</span><span class="hv">'+esc(d.password)+' '+copyBtn(d.password)+'</span></div>'+
       '</div>'+
       '<p class="note" style="margin-top:8px">Contact email on file: <b>'+esc(d.contact_email||"none")+'</b></p>'+
-      '<p class="note">Record the initial password in the vault now; it is shown once. The forced first-login change goes live with Stage 3.</p>'+
+      '<p class="note">'+ (d.email_sent ? 'Welcome email sent to <b>'+esc(d.contact_email)+'</b>.' : (d.contact_email ? 'Email not sent'+(d.email_error&&d.email_error!="smtp_not_configured"?' ('+esc(d.email_error)+')':d.email_error=="smtp_not_configured"?' (mail not yet configured)':'')+' - hand the details over manually.' : 'No contact email on file - hand the details over manually.')) +'</p>'+
+      '<p class="note">Record the initial password in the vault now; it is shown once. The client must set a new password on first login.</p>'+
       '</div></div></div>';
     bindCopy();
     document.getElementById("mx").addEventListener("click", function(){ host.innerHTML=""; loadClients(); });
@@ -304,7 +305,7 @@
       '<button class="back" id="backBtn">&larr; All clients</button>'+
       '<div class="pagehead"><div><div class="kicker">Client</div><h1>'+esc(c.client_name)+'</h1>'+
       '<p class="lead">'+esc(c.slug)+(c.reference?' &middot; '+esc(c.reference):'')+'</p></div>'+
-      '<button class="btn-line" id="resetBtn">Reset password</button></div>'+
+      '<button class="btn-line" id="welcomeBtn" style="margin-right:8px">Email credentials</button><button class="btn-line" id="resetBtn">Reset password</button></div>'+
       '<div class="card"><div class="grid2">'+
       '<div class="kv"><div class="k">Status</div><div class="v">'+pill(c.status)+'</div></div>'+
       '<div class="kv"><div class="k">Engagement</div><div class="v">'+pill(e?e.status:"none")+'</div></div>'+
@@ -319,6 +320,7 @@
 
     document.getElementById("backBtn").addEventListener("click", loadClients);
     document.getElementById("resetBtn").addEventListener("click", function(){ resetPw(c.user_id); });
+    var wb=document.getElementById("welcomeBtn"); if(wb) wb.addEventListener("click", function(){ sendWelcome(c.user_id, c.contact_email); });
     var nv=document.getElementById("newVerBtn");
     if(nv) nv.addEventListener("click", function(){ newVersion(e, vs); });
     Array.prototype.forEach.call(view.querySelectorAll("[data-act]"), function(btn){
@@ -347,6 +349,15 @@
       if(!res.body||!res.body.ok){ alert("Error: "+(res.body&&res.body.error)); return; }
       openClient(e.client_user_id);
     });
+  }
+  function sendWelcome(uid, contact){
+    if(!contact){ alert("No contact email on file for this client. Add one first."); return; }
+    if(!confirm("Email fresh credentials to "+contact+"?\nThis generates a NEW password and forces a change on next login.")) return;
+    api("send_onboarding",{user_id:uid}).then(function(res){
+      if(!guard(res)) return;
+      if(!res.body||!res.body.ok){ alert("Error: "+(res.body&&(res.body.detail||res.body.error))); return; }
+      showHandover(res.body);
+    }).catch(function(){ alert("Network error."); });
   }
   function resetPw(uid){
     var np = prompt("New password for this client (min 8 chars). It will force a change on next login.");
