@@ -220,7 +220,8 @@
       '<div class="field"><label>Client name</label><input id="ncName" placeholder="Smith Family Office"></div>'+
       '<div class="field"><label>Slug</label><input id="ncSlug" placeholder="smith-family" autocapitalize="none"></div>'+
       '<div class="field"><label>Reference (optional)</label><input id="ncRef" placeholder="IFB-FO-2026-XYZ"></div>'+
-      '<div class="field"><label>Username (email)</label><input id="ncEmail" placeholder="client@ifcifb.com" autocapitalize="none"></div>'+
+      '<div class="field"><label>Contact email (optional)</label><input id="ncContact" placeholder="name@email.com" autocapitalize="none"></div>'+
+      '<div class="field"><label>Login username</label><input id="ncEmail" placeholder="smith  ->  becomes smith@ifcifb.com" autocapitalize="none"></div>'+
       '<div class="field"><label>Initial password (optional)</label><input id="ncPw" placeholder="leave blank to auto-generate" autocapitalize="none"></div>'+
       '<button class="btn btn-gold" id="ncSave" style="width:100%">Create client</button>'+
       '<div class="err" id="ncErr"></div>'+
@@ -232,7 +233,7 @@
     document.getElementById("mx").addEventListener("click", function(){ host.innerHTML=""; });
     document.getElementById("ncSave").addEventListener("click", function(){
       var err=document.getElementById("ncErr"); err.textContent="";
-      var b={ client_name:nm.value.trim(), slug:slugify(sl.value), reference:document.getElementById("ncRef").value.trim(), email:document.getElementById("ncEmail").value.trim(), password:document.getElementById("ncPw").value.trim() };
+      var b={ client_name:nm.value.trim(), slug:slugify(sl.value), reference:document.getElementById("ncRef").value.trim(), contact_email:document.getElementById("ncContact").value.trim(), email:document.getElementById("ncEmail").value.trim(), password:document.getElementById("ncPw").value.trim() };
       if(!b.client_name||!b.slug||!b.email){ err.textContent="Name, slug and email are required."; return; }
       var btn=document.getElementById("ncSave"); btn.textContent="Creating..."; btn.disabled=true;
       api("client_create", b).then(function(res){
@@ -251,10 +252,11 @@
       '<p class="lead" style="margin:0 0 14px">Hand these three to the client. The password is shown once.</p>'+
       '<div class="handover">'+
       '<div class="hrow"><span class="hk">Portal link</span><span class="hv">'+esc(d.link)+' '+copyBtn(d.link)+'</span></div>'+
-      '<div class="hrow"><span class="hk">Username</span><span class="hv">'+esc(d.email)+' '+copyBtn(d.email)+'</span></div>'+
+      '<div class="hrow"><span class="hk">Username</span><span class="hv">'+esc(d.username||d.email)+' '+copyBtn(d.username||d.email)+'</span></div>'+
       '<div class="hrow"><span class="hk">Initial password</span><span class="hv">'+esc(d.password)+' '+copyBtn(d.password)+'</span></div>'+
       '</div>'+
-      '<p class="note">The client changes this password on first login. Record it in the vault now; it will not be shown again.</p>'+
+      '<p class="note" style="margin-top:8px">Contact email on file: <b>'+esc(d.contact_email||"none")+'</b></p>'+
+      '<p class="note">Record the initial password in the vault now; it is shown once. The forced first-login change goes live with Stage 3.</p>'+
       '</div></div></div>';
     bindCopy();
     document.getElementById("mx").addEventListener("click", function(){ host.innerHTML=""; loadClients(); });
