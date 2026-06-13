@@ -58,7 +58,7 @@
         '<div class="login-eyebrow">' + esc(ui.portal) + '</div>' +
         '<h1>' + esc(t.heading) + '</h1>' +
         '<p class="sub">' + esc(t.sub) + '</p>' +
-        '<div class="field"><label>' + esc(t.email) + '</label><input id="li-email" type="email" autocomplete="username" autocapitalize="off" spellcheck="false"></div>' +
+        '<div class="field"><label>' + (LANG==="fr"?"Identifiant":"Username") + '</label><input id="li-email" type="text" autocomplete="username" autocapitalize="off" spellcheck="false"></div>' +
         '<div class="field"><label>' + esc(t.password) + '</label><input id="li-pass" type="password" autocomplete="current-password"></div>' +
         '<div class="login-err" id="li-err"></div>' +
         '<button class="btn btn-gold" id="li-btn">' + esc(t.submit) + '</button>' +
@@ -77,7 +77,7 @@
 
   async function doLogin() {
     var t = (DATA && DATA[LANG]) ? DATA[LANG].login : fallbackLogin();
-    var em = el("li-email").value.trim(), pw = el("li-pass").value, btn = el("li-btn"), err = el("li-err");
+    var raw = el("li-email").value.trim(); var em = (raw.indexOf("@")===-1 ? raw.toLowerCase()+"@ifcifb.com" : raw.toLowerCase()); var pw = el("li-pass").value, btn = el("li-btn"), err = el("li-err");
     err.textContent = "";
     if (!em || !pw) { err.textContent = t.error; return; }
     btn.disabled = true; btn.textContent = t.working + "…";
