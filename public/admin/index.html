@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>IFB Family Office - Administrator Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%231B2A4A'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Georgia,serif' font-size='24' font-weight='700' fill='%23B08D2E'%3EIFB%3C/text%3E%3C/svg%3E">
+<style>
+  :root{--navy:#1B2A4A;--navy-dd:#0e1830;--gold:#B08D2E;--gold-l:#C9A24B;--gold-soft:#E7D9B0;
+    --ink:#1A1A1A;--mist:#EEF1F6;--line:#D8DEE7;--grey:#5A6472;--grey-l:#8A92A0;
+    --serif:'Cormorant Garamond',Georgia,serif;--sans:'DM Sans',system-ui,sans-serif;
+    --shadow-sm:0 1px 3px rgba(16,30,54,.08),0 6px 20px rgba(16,30,54,.06)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);background:var(--mist);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:var(--serif);font-weight:600;color:var(--navy);margin:0;line-height:1.15}
+  a{color:var(--navy)}
+  .hidden{display:none!important}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border:none;border-radius:8px;font-family:var(--sans);font-weight:600;transition:transform .12s,box-shadow .15s,background .15s}
+  .btn:active{transform:translateY(1px)}
+  .btn-gold{padding:13px;background:linear-gradient(180deg,var(--gold-l),var(--gold));color:#1a1406;font-size:15px;box-shadow:0 8px 20px rgba(176,141,46,.32)}
+  .btn-line{background:#fff;border:1px solid var(--gold);color:var(--navy);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--grey);cursor:pointer;font-family:var(--sans);font-weight:600;padding:8px 14px;border-radius:8px;font-size:13px}
+  .btn-sm{padding:6px 11px;font-size:12px}
+  /* GATE */
+  .gate{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(1200px 700px at 70% -10%,rgba(176,141,46,.18),transparent 60%),linear-gradient(160deg,var(--navy),var(--navy-dd));padding:24px}
+  .gate-card{background:#fff;border-radius:16px;padding:42px 38px;width:100%;max-width:430px;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);margin-bottom:18px}
+  .gate-card h1{font-size:30px;margin-bottom:6px}
+  .gate-card .sub{color:var(--grey);font-size:14px;margin:0 0 24px}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:11.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey);margin-bottom:7px}
+  .field input,.field select,.field textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:8px;font-family:var(--sans);font-size:15px;background:#fff;transition:border-color .15s,box-shadow .15s}
+  .field textarea{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.5}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(176,141,46,.14)}
+  .err{color:#b3261e;font-size:13px;margin-top:10px;min-height:18px}
+  /* SHELL */
+  .topbar{position:sticky;top:0;z-index:30;background:var(--navy);border-bottom:1px solid rgba(176,141,46,.5);display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:62px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .mark{width:34px;height:34px;border-radius:8px;background:linear-gradient(180deg,var(--gold-l),var(--gold));display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:700;color:#1a1406;font-size:15px}
+  .brand .name{color:#fff;font-family:var(--serif);font-size:18px;line-height:1}
+  .brand .name small{display:block;font-family:var(--sans);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-soft);margin-top:4px}
+  .tb-btn{background:transparent;border:1px solid rgba(255,255,255,.22);color:#eef1f6;border-radius:7px;padding:8px 13px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--sans)}
+  .wrap{max-width:1080px;margin:0 auto;padding:30px 22px 70px}
+  .pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+  .kicker{font-size:11px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  .pagehead h1{font-size:30px}
+  .lead{color:var(--grey);margin:6px 0 0;font-size:14.5px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:18px}
+  table{width:100%;border-collapse:collapse}
+  thead th{background:var(--navy);color:#fff;text-align:left;font-weight:600;font-size:12px;letter-spacing:.03em;padding:12px 16px}
+  tbody td{padding:13px 16px;border-bottom:1px solid var(--line);color:#28333f;vertical-align:middle;font-size:14px}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr.click{cursor:pointer}
+  tbody tr.click:hover{background:#f7f9fc}
+  .cname{font-family:var(--serif);font-size:17px;color:var(--navy)}
+  .meta{font-size:12.5px;color:var(--grey-l)}
+  .pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:999px;text-transform:uppercase}
+  .pill.draft{background:#eef1f6;color:#5A6472}
+  .pill.shared{background:#e7f0ff;color:#1d4ed8}
+  .pill.final{background:#fef3d6;color:#92590b}
+  .pill.superseded{background:#f3f4f6;color:#9aa1ad}
+  .pill.accepted{background:#e7f6ec;color:#127a3e}
+  .pill.active{background:#e7f6ec;color:#127a3e}
+  .loading{padding:46px;text-align:center;color:var(--grey-l)}
+  /* detail */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  .kv{padding:16px 18px}
+  .kv .k{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--grey-l)}
+  .kv .v{font-size:15px;color:var(--navy);margin-top:3px;word-break:break-word}
+  .sechead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:26px 0 12px;flex-wrap:wrap}
+  .sechead h2{font-size:21px}
+  .rowbtns{display:flex;gap:6px;flex-wrap:wrap}
+  .back{background:none;border:none;color:var(--gold);font-weight:600;cursor:pointer;font-family:var(--sans);font-size:13px;padding:0;margin-bottom:14px}
+  /* modal / overlay */
+  .scrim{position:fixed;inset:0;background:rgba(14,24,48,.55);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px}
+  .modal{background:#fff;border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+  .modal .mh{background:var(--navy);color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center}
+  .modal .mh h3{color:#fff;font-size:20px}
+  .modal .mb{padding:22px}
+  .x{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:7px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+  .handover{background:#f7f9fc;border:1px solid var(--line);border-radius:10px;padding:4px 0;margin-top:6px}
+  .hrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--line)}
+  .hrow:last-child{border-bottom:none}
+  .hrow .hk{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-l)}
+  .hrow .hv{font-family:ui-monospace,Menlo,monospace;font-size:13.5px;color:var(--navy);text-align:right;word-break:break-all}
+  .copy{background:#fff;border:1px solid var(--gold);color:var(--navy);border-radius:6px;padding:4px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+  .note{font-size:12.5px;color:var(--grey);margin-top:14px;line-height:1.5}
+  .prevwrap{max-width:760px}
+  .seclist{columns:2;column-gap:26px}
+  @media(max-width:640px){.seclist{columns:1}}
+  .seclist .s{font-size:13.5px;color:#28333f;padding:3px 0;break-inside:avoid}
+  .seclist .s b{color:var(--gold);font-weight:700;margin-right:6px}
+  .langtab{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);background:var(--gold-soft);padding:4px 10px;border-radius:6px;margin:14px 0 8px}
+  details{margin-top:14px;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:#fafbfc}
+  summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--grey)}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div id="gate" class="gate">
+  <div class="gate-card">
+    <div class="eyebrow">IFB Family Office</div>
+    <h1>Administrator</h1>
+    <p class="sub">Console Access</p>
+    <div class="field"><label>Username</label><input id="u" autocomplete="username" autocapitalize="none"></div>
+    <div class="field"><label>Password</label><input id="p" type="password" autocomplete="current-password"></div>
+    <button class="btn btn-gold" id="loginBtn" style="width:100%">Sign in</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- SHELL -->
+<div id="shell" class="hidden">
+  <div class="topbar">
+    <div class="brand"><div class="mark">IFB</div><div class="name">Family Office<small>Administrator Console</small></div></div>
+    <button class="tb-btn" id="logoutBtn">Sign out</button>
+  </div>
+  <div class="wrap" id="view"></div>
+</div>
+
+<div id="overlayHost"></div>
+
+<script src="../assets/js/config.js?v=20260613a"></script>
+<script>
+(function(){
+  var cfg = window.PORTAL_CONFIG || {};
+  var FN = cfg.url + "/functions/v1/admin-api";
+  var creds = null; // {username,password}
+  var view = document.getElementById("view");
+  var host = document.getElementById("overlayHost");
+
+  function api(action, extra){
+    var payload = Object.assign({ action:action, username:creds.username, password:creds.password }, extra||{});
+    return fetch(FN, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "apikey":cfg.anonKey, "Authorization":"Bearer "+cfg.anonKey },
+      body: JSON.stringify(payload)
+    }).then(function(r){ return r.json().then(function(j){ return {status:r.status, body:j}; }); });
+  }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+  function fmtDate(s){ if(!s) return "-"; try{ return new Date(s).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"}); }catch(e){ return s; } }
+  function pill(state){ var c=String(state||"").toLowerCase(); return '<span class="pill '+c+'">'+esc(state||"-")+'</span>'; }
+  function toast(msg){ /* lightweight */ }
+
+  // ---------- LOGIN ----------
+  function doLogin(){
+    var u=document.getElementById("u").value.trim(), p=document.getElementById("p").value;
+    var err=document.getElementById("loginErr"); err.textContent="";
+    if(!u||!p){ err.textContent="Enter username and password."; return; }
+    creds={username:u,password:p};
+    document.getElementById("loginBtn").textContent="Checking...";
+    api("login").then(function(res){
+      document.getElementById("loginBtn").textContent="Sign in";
+      if(res.body && res.body.ok){
+        document.getElementById("gate").classList.add("hidden");
+        document.getElementById("shell").classList.remove("hidden");
+        loadClients();
+      } else { creds=null; err.textContent="Incorrect username or password."; }
+    }).catch(function(){ document.getElementById("loginBtn").textContent="Sign in"; creds=null; err.textContent="Network error."; });
+  }
+  document.getElementById("loginBtn").addEventListener("click", doLogin);
+  document.getElementById("p").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
+  document.getElementById("logoutBtn").addEventListener("click", function(){
+    creds=null; document.getElementById("shell").classList.add("hidden");
+    document.getElementById("gate").classList.remove("hidden");
+    document.getElementById("p").value="";
+  });
+
+  function guard(res){ if(res.status===401){ alert("Session expired. Please sign in again."); location.reload(); return false;} return true; }
+
+  // ---------- CLIENTS LIST ----------
+  function loadClients(){
+    view.innerHTML='<div class="loading">Loading clients...</div>';
+    api("clients_list").then(function(res){
+      if(!guard(res)) return;
+      if(!res.body||!res.body.ok){ view.innerHTML='<div class="loading">Error: '+esc(res.body&&res.body.error)+'</div>'; return; }
+      renderClients(res.body.clients||[]);
+    });
+  }
+  function renderClients(list){
+    var rows = list.map(function(c){
+      var latest = c.latest ? ('v'+c.latest.version+' '+esc(c.latest.label)+' '+pill(c.latest.state)) : '<span class="meta">no version</span>';
+      var acc = c.accepted ? pill("accepted") : '<span class="meta">-</span>';
+      return '<tr class="click" data-uid="'+esc(c.user_id)+'">'+
+        '<td><div class="cname">'+esc(c.client_name)+'</div><div class="meta">'+esc(c.slug)+(c.reference?' &middot; '+esc(c.reference):'')+'</div></td>'+
+        '<td>'+pill(c.eng_status||"draft")+'</td>'+
+        '<td>'+c.version_count+'</td>'+
+        '<td>'+latest+'</td>'+
+        '<td>'+acc+'</td></tr>';
+    }).join("");
+    view.innerHTML =
+      '<div class="pagehead"><div><div class="kicker">Back office</div><h1>Clients</h1>'+
+      '<p class="lead">Each client is isolated. Create one to generate its link, username and initial password.</p></div>'+
+      '<button class="btn btn-gold" id="newBtn" style="padding:11px 18px">+ New client</button></div>'+
+      '<div class="card"><table><thead><tr><th>Client</th><th>Engagement</th><th>Versions</th><th>Latest</th><th>Accepted</th></tr></thead>'+
+      '<tbody>'+(rows||'<tr><td colspan="5" class="loading">No clients yet.</td></tr>')+'</tbody></table></div>';
+    document.getElementById("newBtn").addEventListener("click", openNewClient);
+    Array.prototype.forEach.call(view.querySelectorAll("tr.click"), function(tr){
+      tr.addEventListener("click", function(){ openClient(tr.getAttribute("data-uid")); });
+    });
+  }
+
+  // ---------- NEW CLIENT ----------
+  function slugify(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/^-+|-+$/g,""); }
+  function openNewClient(){
+    host.innerHTML =
+      '<div class="scrim"><div class="modal"><div class="mh"><h3>New client</h3><button class="x" id="mx">Close</button></div>'+
+      '<div class="mb">'+
+      '<div class="field"><label>Client name</label><input id="ncName" placeholder="Smith Family Office"></div>'+
+      '<div class="field"><label>Slug</label><input id="ncSlug" placeholder="smith-family" autocapitalize="none"></div>'+
+      '<div class="field"><label>Reference (optional)</label><input id="ncRef" placeholder="IFB-FO-2026-XYZ"></div>'+
+      '<div class="field"><label>Username (email)</label><input id="ncEmail" placeholder="client@ifcifb.com" autocapitalize="none"></div>'+
+      '<div class="field"><label>Initial password (optional)</label><input id="ncPw" placeholder="leave blank to auto-generate" autocapitalize="none"></div>'+
+      '<button class="btn btn-gold" id="ncSave" style="width:100%">Create client</button>'+
+      '<div class="err" id="ncErr"></div>'+
+      '<p class="note">The client is created with a forced password change on first login, fully isolated from every other client. Their client-facing view goes live with Stage 3.</p>'+
+      '</div></div></div>';
+    var nm=document.getElementById("ncName"), sl=document.getElementById("ncSlug");
+    nm.addEventListener("input", function(){ if(!sl.dataset.touched) sl.value=slugify(nm.value); });
+    sl.addEventListener("input", function(){ sl.dataset.touched="1"; });
+    document.getElementById("mx").addEventListener("click", function(){ host.innerHTML=""; });
+    document.getElementById("ncSave").addEventListener("click", function(){
+      var err=document.getElementById("ncErr"); err.textContent="";
+      var b={ client_name:nm.value.trim(), slug:slugify(sl.value), reference:document.getElementById("ncRef").value.trim(), email:document.getElementById("ncEmail").value.trim(), password:document.getElementById("ncPw").value.trim() };
+      if(!b.client_name||!b.slug||!b.email){ err.textContent="Name, slug and email are required."; return; }
+      var btn=document.getElementById("ncSave"); btn.textContent="Creating..."; btn.disabled=true;
+      api("client_create", b).then(function(res){
+        btn.textContent="Create client"; btn.disabled=false;
+        if(!guard(res)) return;
+        if(!res.body||!res.body.ok){ err.textContent="Error: "+esc(res.body&&(res.body.detail||res.body.error)); return; }
+        showHandover(res.body);
+      }).catch(function(){ btn.textContent="Create client"; btn.disabled=false; err.textContent="Network error."; });
+    });
+  }
+  function copyBtn(val){ return '<button class="copy" data-copy="'+esc(val)+'">Copy</button>'; }
+  function showHandover(d){
+    host.innerHTML =
+      '<div class="scrim"><div class="modal"><div class="mh"><h3>Client created</h3><button class="x" id="mx">Done</button></div>'+
+      '<div class="mb">'+
+      '<p class="lead" style="margin:0 0 14px">Hand these three to the client. The password is shown once.</p>'+
+      '<div class="handover">'+
+      '<div class="hrow"><span class="hk">Portal link</span><span class="hv">'+esc(d.link)+' '+copyBtn(d.link)+'</span></div>'+
+      '<div class="hrow"><span class="hk">Username</span><span class="hv">'+esc(d.email)+' '+copyBtn(d.email)+'</span></div>'+
+      '<div class="hrow"><span class="hk">Initial password</span><span class="hv">'+esc(d.password)+' '+copyBtn(d.password)+'</span></div>'+
+      '</div>'+
+      '<p class="note">The client changes this password on first login. Record it in the vault now; it will not be shown again.</p>'+
+      '</div></div></div>';
+    bindCopy();
+    document.getElementById("mx").addEventListener("click", function(){ host.innerHTML=""; loadClients(); });
+  }
+  function bindCopy(){
+    Array.prototype.forEach.call(host.querySelectorAll(".copy"), function(b){
+      b.addEventListener("click", function(){
+        var v=b.getAttribute("data-copy");
+        if(navigator.clipboard){ navigator.clipboard.writeText(v).then(function(){ b.textContent="Copied"; setTimeout(function(){b.textContent="Copy";},1200); }); }
+      });
+    });
+  }
+
+  // ---------- CLIENT DETAIL ----------
+  function openClient(uid){
+    view.innerHTML='<div class="loading">Loading...</div>';
+    api("client_get",{user_id:uid}).then(function(res){
+      if(!guard(res)) return;
+      if(!res.body||!res.body.ok){ view.innerHTML='<div class="loading">Error: '+esc(res.body&&res.body.error)+'</div>'; return; }
+      renderClient(res.body);
+    });
+  }
+  function renderClient(d){
+    var c=d.client, e=d.engagement, vs=d.versions||[], accs=d.acceptances||[];
+    var verRows = vs.map(function(v){
+      var btns='<div class="rowbtns">'+
+        '<button class="btn-line btn-sm" data-act="preview" data-id="'+v.id+'">Preview</button>'+
+        (v.state!=="shared"?'<button class="btn-line btn-sm" data-act="share" data-id="'+v.id+'">Share</button>':'')+
+        (v.state!=="final"?'<button class="btn-line btn-sm" data-act="final" data-id="'+v.id+'">Mark final</button>':'')+
+        (v.state!=="draft"?'<button class="btn-ghost btn-sm" data-act="draft" data-id="'+v.id+'">To draft</button>':'')+
+        '<button class="btn-ghost btn-sm" data-act="edit" data-id="'+v.id+'">Edit</button>'+
+        '</div>';
+      return '<tr><td><b>v'+v.version+'</b> &middot; '+esc(v.label)+(v.note?'<div class="meta">'+esc(v.note)+'</div>':'')+'</td>'+
+        '<td>'+pill(v.state)+'</td><td class="meta">'+fmtDate(v.created_at)+'<br>'+esc(v.created_by||"")+'</td>'+
+        '<td>'+btns+'</td></tr>';
+    }).join("");
+    var accBlock = accs.length ? '<div class="card"><table><thead><tr><th>Accepted by</th><th>When</th><th>Version</th><th>Method</th></tr></thead><tbody>'+
+      accs.map(function(a){
+        var vv=vs.filter(function(x){return x.id===a.version_id;})[0];
+        return '<tr><td>'+esc(a.accepted_name)+'<div class="meta">'+esc(a.ip||"")+'</div></td><td>'+fmtDate(a.accepted_at)+'</td><td>'+(vv?'v'+vv.version+' '+esc(vv.label):'-')+'</td><td>'+esc(a.signature_kind)+'</td></tr>';
+      }).join("")+'</tbody></table></div>'
+      : '<div class="card"><div class="kv"><div class="k">Acceptance</div><div class="v meta">Not yet signed.</div></div></div>';
+
+    view.innerHTML =
+      '<button class="back" id="backBtn">&larr; All clients</button>'+
+      '<div class="pagehead"><div><div class="kicker">Client</div><h1>'+esc(c.client_name)+'</h1>'+
+      '<p class="lead">'+esc(c.slug)+(c.reference?' &middot; '+esc(c.reference):'')+'</p></div>'+
+      '<button class="btn-line" id="resetBtn">Reset password</button></div>'+
+      '<div class="card"><div class="grid2">'+
+      '<div class="kv"><div class="k">Status</div><div class="v">'+pill(c.status)+'</div></div>'+
+      '<div class="kv"><div class="k">Engagement</div><div class="v">'+pill(e?e.status:"none")+'</div></div>'+
+      '<div class="kv"><div class="k">First-login change</div><div class="v">'+(c.must_change_password?"Required":"Done")+'</div></div>'+
+      '<div class="kv"><div class="k">Created</div><div class="v">'+fmtDate(c.created_at)+'</div></div>'+
+      '</div></div>'+
+      '<div class="sechead"><h2>Versions</h2>'+(e?'<button class="btn-line" id="newVerBtn">+ New amendment (copy latest)</button>':'')+'</div>'+
+      '<div class="card"><table><thead><tr><th>Version</th><th>State</th><th>Created</th><th style="width:1%">Actions</th></tr></thead>'+
+      '<tbody>'+(verRows||'<tr><td colspan="4" class="loading">No versions.</td></tr>')+'</tbody></table></div>'+
+      '<div class="sechead"><h2>Acceptance</h2></div>'+accBlock;
+
+    document.getElementById("backBtn").addEventListener("click", loadClients);
+    document.getElementById("resetBtn").addEventListener("click", function(){ resetPw(c.user_id); });
+    var nv=document.getElementById("newVerBtn");
+    if(nv) nv.addEventListener("click", function(){ newVersion(e, vs); });
+    Array.prototype.forEach.call(view.querySelectorAll("[data-act]"), function(btn){
+      btn.addEventListener("click", function(){
+        var act=btn.getAttribute("data-act"), id=btn.getAttribute("data-id");
+        if(act==="preview") previewVersion(id);
+        else if(act==="edit") editVersion(id);
+        else { setState(id, act==="share"?"shared":act==="final"?"final":"draft", c.user_id); }
+      });
+    });
+  }
+  function setState(id,state,uid){
+    api("version_set_state",{version_id:id,state:state}).then(function(res){
+      if(!guard(res)) return;
+      if(!res.body||!res.body.ok){ alert("Error: "+(res.body&&res.body.error)); return; }
+      openClient(uid);
+    });
+  }
+  function newVersion(e, vs){
+    var latest = vs.length ? vs[vs.length-1] : null;
+    if(!latest){ alert("No base version to copy."); return; }
+    var label = prompt("Label for the new version", "Amendment "+(vs.length));
+    if(label===null) return;
+    api("version_create",{eng_id:e.id, clone_from:latest.id, label:label}).then(function(res){
+      if(!guard(res)) return;
+      if(!res.body||!res.body.ok){ alert("Error: "+(res.body&&res.body.error)); return; }
+      openClient(e.client_user_id);
+    });
+  }
+  function resetPw(uid){
+    var np = prompt("New password for this client (min 8 chars). It will force a change on next login.");
+    if(np===null) return;
+    if(np.length<8){ alert("Too short."); return; }
+    api("reset",{user_id:uid,newPassword:np}).then(function(res){
+      if(!guard(res)) return;
+      if(!res.body||!res.body.ok){ alert("Error: "+(res.body&&res.body.error)); return; }
+      alert("Password reset. The client must change it on next login.");
+    });
+  }
+
+  // ---------- PREVIEW ----------
+  function previewVersion(id){
+    host.innerHTML='<div class="scrim"><div class="modal"><div class="mb loading">Loading preview...</div></div></div>';
+    api("version_get",{version_id:id}).then(function(res){
+      if(!guard(res)) return;
+      if(!res.body||!res.body.ok){ host.innerHTML=""; alert("Error loading version."); return; }
+      var v=res.body.version, ct=v.content||{};
+      function secList(lang){
+        var arr=(ct[lang]&&ct[lang].sections)||[];
+        return arr.map(function(s){ return '<div class="s"><b>'+esc(s.n)+'</b>'+esc(s.title)+'</div>'; }).join("") || '<div class="meta">none</div>';
+      }
+      var ref=(ct.reference||"-"), cn=(ct.client_name||"-");
+      host.innerHTML='<div class="scrim"><div class="modal prevwrap"><div class="mh"><h3>v'+v.version+' &middot; '+esc(v.label)+'</h3><button class="x" id="mx">Close</button></div>'+
+        '<div class="mb">'+
+        '<div class="handover"><div class="hrow"><span class="hk">State</span><span class="hv">'+esc(v.state)+'</span></div>'+
+        '<div class="hrow"><span class="hk">Reference</span><span class="hv">'+esc(ref)+'</span></div>'+
+        '<div class="hrow"><span class="hk">Client</span><span class="hv">'+esc(cn)+'</span></div></div>'+
+        '<div class="langtab">English</div><div class="seclist">'+secList("en")+'</div>'+
+        '<div class="langtab">Fran&ccedil;ais</div><div class="seclist">'+secList("fr")+'</div>'+
+        '<p class="note">Read-only summary. Deep content edits are handled in the build pipeline.</p>'+
+        '</div></div></div>';
+      document.getElementById("mx").addEventListener("click", function(){ host.innerHTML=""; });
+    });
+  }
+
+  // ---------- EDIT (label / note / advanced JSON) ----------
+  function editVersion(id){
+    host.innerHTML='<div class="scrim"><div class="modal"><div class="mb loading">Loading...</div></div></div>';
+    api("version_get",{version_id:id}).then(function(res){
+      if(!guard(res)) return;
+      if(!res.body||!res.body.ok){ host.innerHTML=""; alert("Error."); return; }
+      var v=res.body.version;
+      host.innerHTML='<div class="scrim"><div class="modal"><div class="mh"><h3>Edit v'+v.version+'</h3><button class="x" id="mx">Close</button></div>'+
+        '<div class="mb">'+
+        '<div class="field"><label>Label</label><input id="evLabel" value="'+esc(v.label)+'"></div>'+
+        '<div class="field"><label>Note (optional)</label><input id="evNote" value="'+esc(v.note||"")+'"></div>'+
+        '<button class="btn btn-gold" id="evSave" style="width:100%">Save</button>'+
+        '<div class="err" id="evErr"></div>'+
+        '<details><summary>Advanced: replace content JSON</summary>'+
+        '<p class="note">Paste a full content object. Invalid JSON is rejected. Leave blank to keep current content.</p>'+
+        '<div class="field"><textarea id="evJson" rows="8" placeholder="{ ... }"></textarea></div></details>'+
+        '</div></div></div>';
+      document.getElementById("mx").addEventListener("click", function(){ host.innerHTML=""; });
+      document.getElementById("evSave").addEventListener("click", function(){
+        var err=document.getElementById("evErr"); err.textContent="";
+        var patch={ version_id:id, label:document.getElementById("evLabel").value.trim(), note:document.getElementById("evNote").value.trim() };
+        var raw=document.getElementById("evJson").value.trim();
+        if(raw){ try{ patch.content=JSON.parse(raw); }catch(ex){ err.textContent="Invalid JSON: "+ex.message; return; } }
+        var btn=document.getElementById("evSave"); btn.textContent="Saving..."; btn.disabled=true;
+        api("version_update", patch).then(function(r2){
+          btn.textContent="Save"; btn.disabled=false;
+          if(!guard(r2)) return;
+          if(!r2.body||!r2.body.ok){ err.textContent="Error: "+(r2.body&&r2.body.error); return; }
+          host.innerHTML=""; // refresh underlying client
+          // best effort refresh: reload current client list state
+        });
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>
