@@ -8,6 +8,7 @@
   var LANG = (navigator.language || "en").toLowerCase().indexOf("fr") === 0 ? "fr" : "en";
   var SECTION = 0;
   var liveCharts = {};
+  var CLIENT = null, ENG = null, CURVER = null, ACCEPTED = null, UID = null;
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var el = function (id) { return document.getElementById(id); };
@@ -90,12 +91,164 @@
     }
   }
 
+  function setLoginErr(m){ var e = el("li-err"); if (e) e.textContent = m; }
+  async function safeSignOut(){ try { await sb.auth.signOut(); } catch (e) {} DATA = null; CLIENT = null; ENG = null; CURVER = null; ACCEPTED = null; }
+
   async function loadAndEnter() {
-    var r = await sb.from("proposals").select("content").limit(1).maybeSingle();
-    if (r.error || !r.data) { await sb.auth.signOut(); showLogin(); el("li-err") && (el("li-err").textContent = "No proposal is available for this account."); return; }
-    DATA = r.data.content;
-    if (!DATA[LANG]) LANG = "en";
-    enterApp();
+    try {
+      var sess = await sb.auth.getSession();
+      var u = sess && sess.data && sess.data.session && sess.data.session.user;
+      if (!u) { showLogin(); return; }
+      UID = u.id;
+      var cr = await sb.from("clients").select("user_id, client_name, slug, reference, must_change_password").eq("user_id", UID).maybeSingle();
+      if (cr.error || !cr.data) { await safeSignOut(); showLogin(); setLoginErr("No proposal is available for this account."); return; }
+      CLIENT = cr.data;
+      if (CLIENT.must_change_password === true) { showChangePassword(loadVersionAndEnter); return; }
+      await loadVersionAndEnter();
+    } catch (e) { await safeSignOut(); showLogin(); }
+  }
+
+  async function loadVersionAndEnter() {
+    try {
+      var eg = await sb.from("engagements").select("id, current_version_id, status").eq("client_user_id", UID).maybeSingle();
+      if (eg.error || !eg.data) { await safeSignOut(); showLogin(); setLoginErr("No proposal is available for this account yet."); return; }
+      ENG = eg.data;
+      var ver = null;
+      if (ENG.current_version_id) {
+        var v1 = await sb.from("proposal_versions").select("id, version, label, state, content").eq("id", ENG.current_version_id).maybeSingle();
+        if (!v1.error && v1.data && (v1.data.state === "shared" || v1.data.state === "final")) ver = v1.data;
+      }
+      if (!ver) {
+        var v2 = await sb.from("proposal_versions").select("id, version, label, state, content").eq("engagement_id", ENG.id).in("state", ["shared", "final"]).order("version", { ascending: false }).limit(1).maybeSingle();
+        if (!v2.error && v2.data) ver = v2.data;
+      }
+      if (!ver || !ver.content) { await safeSignOut(); showLogin(); setLoginErr("No proposal is available for this account yet."); return; }
+      CURVER = { id: ver.id, version: ver.version, label: ver.label, state: ver.state, engagement_id: ENG.id };
+      DATA = ver.content;
+      if (!DATA[LANG]) LANG = "en";
+      try {
+        var ac = await sb.from("acceptances").select("accepted_name, accepted_at").eq("version_id", ver.id).order("accepted_at", { ascending: false }).limit(1).maybeSingle();
+        ACCEPTED = (!ac.error && ac.data) ? ac.data : null;
+      } catch (e) { ACCEPTED = null; }
+      enterApp();
+    } catch (e) { await safeSignOut(); showLogin(); }
+  }
+
+  function t3() {
+    if (LANG === "fr") return {
+      cpEyebrow: "Portail Client Privé", cpHeading: "Définir votre mot de passe",
+      cpSub: "Pour votre sécurité, choisissez un nouveau mot de passe avant de continuer.",
+      cpNew: "Nouveau mot de passe", cpConfirm: "Confirmer le mot de passe", cpHint: "Au moins 10 caractères.",
+      cpSave: "Enregistrer et continuer", cpWorking: "Enregistrement",
+      cpShort: "Utilisez au moins 10 caractères.", cpMismatch: "Les deux mots de passe ne correspondent pas.",
+      cpFail: "Cela n'a pas fonctionné. Veuillez réessayer.",
+      acceptBtn: "Accepter et signer", accepted: "Acceptée",
+      amHeading: "Accepter cette proposition",
+      amBody: "En saisissant votre nom légal complet et en confirmant, vous reconnaissez avoir lu et accepté cette proposition. Votre nom, la date et l'heure, la version du document et votre appareil sont enregistrés comme votre signature électronique.",
+      amName: "Nom légal complet", amConsent: "J'ai lu et j'accepte cette proposition.",
+      amConfirm: "Confirmer l'acceptation", amCancel: "Annuler",
+      amNeedName: "Veuillez saisir votre nom légal complet.", amNeedConsent: "Veuillez cocher la case pour confirmer.",
+      amFail: "Impossible d'enregistrer votre acceptation. Veuillez réessayer."
+    };
+    return {
+      cpEyebrow: "Private Client Portal", cpHeading: "Set your password",
+      cpSub: "For your security, choose a new password before continuing.",
+      cpNew: "New password", cpConfirm: "Confirm password", cpHint: "At least 10 characters.",
+      cpSave: "Save and continue", cpWorking: "Saving",
+      cpShort: "Use at least 10 characters.", cpMismatch: "The two passwords do not match.",
+      cpFail: "That did not work. Please try again.",
+      acceptBtn: "Accept & sign", accepted: "Accepted",
+      amHeading: "Accept this proposal",
+      amBody: "By typing your full legal name and confirming, you acknowledge that you have read and accept this proposal. Your name, the date and time, the document version and your device are recorded as your electronic signature.",
+      amName: "Full legal name", amConsent: "I have read and accept this proposal.",
+      amConfirm: "Confirm acceptance", amCancel: "Cancel",
+      amNeedName: "Please enter your full legal name.", amNeedConsent: "Please tick the box to confirm.",
+      amFail: "Could not record your acceptance. Please try again."
+    };
+  }
+
+  function showChangePassword(next) {
+    el("app").style.display = "none";
+    var x = t3();
+    el("login").innerHTML =
+      '<div class="login-card">' + logoIMG("login-logo") +
+        '<div class="login-eyebrow">' + esc(x.cpEyebrow) + '</div>' +
+        '<h1>' + esc(x.cpHeading) + '</h1>' +
+        '<p class="sub">' + esc(x.cpSub) + '</p>' +
+        '<div class="field"><label>' + esc(x.cpNew) + '</label><input id="cp1" type="password" autocomplete="new-password"></div>' +
+        '<div class="field"><label>' + esc(x.cpConfirm) + '</label><input id="cp2" type="password" autocomplete="new-password"></div>' +
+        '<div class="login-err" id="cp-err"></div>' +
+        '<button class="btn btn-gold" id="cp-btn">' + esc(x.cpSave) + '</button>' +
+        '<div class="login-secure">' + lock() + '<span>' + esc(x.cpHint) + '</span></div>' +
+      '</div>';
+    el("login").classList.remove("hidden");
+    var b = el("cp-btn");
+    async function submit() {
+      var p1 = el("cp1").value, p2 = el("cp2").value, err = el("cp-err"); err.textContent = "";
+      if (!p1 || p1.length < 10) { err.textContent = x.cpShort; return; }
+      if (p1 !== p2) { err.textContent = x.cpMismatch; return; }
+      b.disabled = true; b.textContent = x.cpWorking + "...";
+      try {
+        var r = await sb.auth.updateUser({ password: p1 });
+        if (r.error) throw r.error;
+        await sb.from("clients").update({ must_change_password: false, updated_at: new Date().toISOString() }).eq("user_id", UID);
+        if (CLIENT) CLIENT.must_change_password = false;
+        await next();
+      } catch (e) { b.disabled = false; b.textContent = x.cpSave; err.textContent = x.cpFail; }
+    }
+    b.addEventListener("click", submit);
+    el("cp2").addEventListener("keydown", function (e) { if (e.key === "Enter") submit(); });
+    el("cp1").focus();
+  }
+
+  function acceptControl() {
+    if (PREVIEW || !CURVER) return "";
+    var x = t3();
+    if (ACCEPTED) {
+      var ttl = esc((ACCEPTED.accepted_name || "") + (ACCEPTED.accepted_at ? " - " + new Date(ACCEPTED.accepted_at).toLocaleString() : ""));
+      return '<span class="prev-pill" title="' + ttl + '" style="background:#1f7a44;color:#fff;border-color:#1f7a44">' + esc(x.accepted) + '</span>';
+    }
+    return '<button class="tb-btn" id="tb-accept" style="border-color:#B08D2E;color:#9a771f;font-weight:600">' + esc(x.acceptBtn) + '</button>';
+  }
+
+  function openAccept() {
+    if (!CURVER || ACCEPTED) return;
+    var x = t3();
+    var host = document.createElement("div"); host.id = "acceptHost";
+    host.innerHTML =
+      '<div style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:18px" id="ac-scrim">' +
+        '<div style="background:#fff;border-radius:14px;max-width:470px;width:100%;padding:24px 22px;font-family:DM Sans,system-ui,sans-serif;box-shadow:0 24px 70px rgba(15,23,42,.35)">' +
+          '<h3 style="margin:0 0 10px;font-family:Cormorant Garamond,Georgia,serif;font-size:26px;color:#1B2A4A">' + esc(x.amHeading) + '</h3>' +
+          '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#3a4658">' + esc(x.amBody) + '</p>' +
+          '<label style="display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#5A6472;margin-bottom:6px">' + esc(x.amName) + '</label>' +
+          '<input id="ac-name" type="text" autocomplete="name" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #cdd5e2;border-radius:9px;font-size:15px;margin-bottom:14px">' +
+          '<label style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:#3a4658;line-height:1.5;margin-bottom:6px;cursor:pointer">' +
+            '<input id="ac-consent" type="checkbox" style="margin-top:2px;width:16px;height:16px"> <span>' + esc(x.amConsent) + '</span></label>' +
+          '<div id="ac-err" style="color:#b3261e;font-size:13px;min-height:18px;margin:2px 0 8px"></div>' +
+          '<div style="display:flex;gap:10px;justify-content:flex-end">' +
+            '<button id="ac-cancel" style="padding:10px 16px;border:1px solid #cdd5e2;background:#fff;border-radius:9px;font-size:14px;cursor:pointer;color:#3a4658">' + esc(x.amCancel) + '</button>' +
+            '<button id="ac-go" style="padding:10px 18px;border:0;background:#B08D2E;color:#fff;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer">' + esc(x.amConfirm) + '</button>' +
+          '</div>' +
+        '</div></div>';
+    document.body.appendChild(host);
+    function close() { host.remove(); }
+    el("ac-cancel").addEventListener("click", close);
+    el("ac-scrim").addEventListener("click", function (e) { if (e.target === el("ac-scrim")) close(); });
+    var go = el("ac-go");
+    go.addEventListener("click", async function () {
+      var nm = el("ac-name").value.trim(), ok = el("ac-consent").checked, err = el("ac-err"); err.textContent = "";
+      if (!nm) { err.textContent = x.amNeedName; return; }
+      if (!ok) { err.textContent = x.amNeedConsent; return; }
+      go.disabled = true; go.textContent = "...";
+      try {
+        var payload = { version_id: CURVER.id, engagement_id: CURVER.engagement_id, client_user_id: UID, accepted_name: nm, accepted_at: new Date().toISOString(), signature_kind: "typed", signature_data: nm, user_agent: navigator.userAgent };
+        var r = await sb.from("acceptances").insert(payload).select("accepted_name, accepted_at").maybeSingle();
+        if (r.error) throw r.error;
+        ACCEPTED = r.data || { accepted_name: nm, accepted_at: payload.accepted_at };
+        close(); enterApp();
+      } catch (e) { go.disabled = false; go.textContent = x.amConfirm; err.textContent = x.amFail; }
+    });
+    el("ac-name").focus();
   }
 
   /* ---------- app shell ---------- */
@@ -110,6 +263,7 @@
         '<div class="tb-actions">' +
           '<button class="tb-btn lang" id="tb-lang">' + globe() + '<span>' + esc(ui.toLang) + '</span></button>' +
           '<button class="tb-btn" id="tb-print">' + printer() + '<span>' + esc(ui.print) + '</span></button>' +
+          acceptControl() +
           (PREVIEW ? '<span class="prev-pill">Administrator preview</span>' : '<button class="tb-btn" id="tb-out">' + esc(ui.signOut) + '</button>') +
         '</div>' +
       '</header>' +
@@ -124,6 +278,7 @@
       '</div>';
     el("tb-lang").addEventListener("click", toggleLang);
     el("tb-print").addEventListener("click", doPrint);
+    if (el("tb-accept")) el("tb-accept").addEventListener("click", openAccept);
     if (!PREVIEW) el("tb-out").addEventListener("click", async function () { await sb.auth.signOut(); DATA = null; location.reload(); });
     el("mobsel").addEventListener("change", function (e) { go(+e.target.value); });
     buildSidebar();
