@@ -141,7 +141,7 @@
   var host = document.getElementById("overlayHost");
 
   function api(action, extra){
-    var payload = Object.assign({ action:action, username:creds.username, password:creds.password }, extra||{});
+    var payload = Object.assign({}, extra||{}, { action:action, username:creds.username, password:creds.password });
     return fetch(FN, {
       method:"POST",
       headers:{ "Content-Type":"application/json", "apikey":cfg.anonKey, "Authorization":"Bearer "+cfg.anonKey },
@@ -233,7 +233,7 @@
     document.getElementById("mx").addEventListener("click", function(){ host.innerHTML=""; });
     document.getElementById("ncSave").addEventListener("click", function(){
       var err=document.getElementById("ncErr"); err.textContent="";
-      var b={ client_name:nm.value.trim(), slug:slugify(sl.value), reference:document.getElementById("ncRef").value.trim(), contact_email:document.getElementById("ncContact").value.trim(), email:document.getElementById("ncEmail").value.trim(), password:document.getElementById("ncPw").value.trim() };
+      var b={ client_name:nm.value.trim(), slug:slugify(sl.value), reference:document.getElementById("ncRef").value.trim(), contact_email:document.getElementById("ncContact").value.trim(), email:document.getElementById("ncEmail").value.trim(), initial_password:document.getElementById("ncPw").value.trim() };
       if(!b.client_name||!b.slug||!b.email){ err.textContent="Name, slug and email are required."; return; }
       var btn=document.getElementById("ncSave"); btn.textContent="Creating..."; btn.disabled=true;
       api("client_create", b).then(function(res){
