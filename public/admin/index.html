@@ -98,6 +98,11 @@
   .langtab{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);background:var(--gold-soft);padding:4px 10px;border-radius:6px;margin:14px 0 8px}
   details{margin-top:14px;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:#fafbfc}
   summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--grey)}
+  .pvfull{position:fixed;inset:0;z-index:70;background:#fff;display:flex;flex-direction:column}
+  .pvbar{height:54px;flex:none;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 18px}
+  .pvt{font-family:var(--serif);font-size:18px}
+  .pvt small{font-family:var(--sans);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-soft);margin-left:10px}
+  .pvframe{flex:1;width:100%;border:0;background:#fff}
 </style>
 </head>
 <body>
@@ -351,28 +356,33 @@
     });
   }
 
-  // ---------- PREVIEW ----------
+  // ---------- PREVIEW (full render via client preview surface) ----------
   function previewVersion(id){
     host.innerHTML='<div class="scrim"><div class="modal"><div class="mb loading">Loading preview...</div></div></div>';
     api("version_get",{version_id:id}).then(function(res){
       if(!guard(res)) return;
       if(!res.body||!res.body.ok){ host.innerHTML=""; alert("Error loading version."); return; }
-      var v=res.body.version, ct=v.content||{};
-      function secList(lang){
-        var arr=(ct[lang]&&ct[lang].sections)||[];
-        return arr.map(function(s){ return '<div class="s"><b>'+esc(s.n)+'</b>'+esc(s.title)+'</div>'; }).join("") || '<div class="meta">none</div>';
-      }
-      var ref=(ct.reference||"-"), cn=(ct.client_name||"-");
-      host.innerHTML='<div class="scrim"><div class="modal prevwrap"><div class="mh"><h3>v'+v.version+' &middot; '+esc(v.label)+'</h3><button class="x" id="mx">Close</button></div>'+
-        '<div class="mb">'+
-        '<div class="handover"><div class="hrow"><span class="hk">State</span><span class="hv">'+esc(v.state)+'</span></div>'+
-        '<div class="hrow"><span class="hk">Reference</span><span class="hv">'+esc(ref)+'</span></div>'+
-        '<div class="hrow"><span class="hk">Client</span><span class="hv">'+esc(cn)+'</span></div></div>'+
-        '<div class="langtab">English</div><div class="seclist">'+secList("en")+'</div>'+
-        '<div class="langtab">Fran&ccedil;ais</div><div class="seclist">'+secList("fr")+'</div>'+
-        '<p class="note">Read-only summary. Deep content edits are handled in the build pipeline.</p>'+
-        '</div></div></div>';
-      document.getElementById("mx").addEventListener("click", function(){ host.innerHTML=""; });
+      var v=res.body.version, content=v.content||{};
+      host.innerHTML=
+        '<div class="pvfull">'+
+          '<div class="pvbar"><div class="pvt">v'+v.version+' &middot; '+esc(v.label)+' <small>'+esc(v.state)+'</small></div>'+
+          '<button class="x" id="pvClose">Close</button></div>'+
+          '<iframe id="pvFrame" class="pvframe" title="Proposal preview"></iframe>'+
+        '</div>';
+      var frame=document.getElementById("pvFrame");
+      var sent=false;
+      var handler=function(e){
+        if(e.origin!==location.origin) return;
+        if(e.data && e.data.type==="ifb_preview_ready" && !sent){
+          sent=true;
+          try{ frame.contentWindow.postMessage({type:"ifb_preview_data", content:content}, location.origin); }catch(err){}
+        }
+      };
+      window.addEventListener("message", handler);
+      document.getElementById("pvClose").addEventListener("click", function(){
+        window.removeEventListener("message", handler); host.innerHTML="";
+      });
+      frame.src="/?preview=1";
     });
   }
 
